@@ -23,7 +23,7 @@ let m = chatUpdate.messages[chatUpdate.messages.length - 1]
 if (!m)
 return;
 if (global.db.data == null)
-await global.loadDatabase()       
+await global.loadDatabase()       
 try {
 m = smsg(this, m) || m
 if (!m)
@@ -32,7 +32,7 @@ m.exp = 0
 m.coin = false
 try {
 let user = global.db.data.users[m.sender]
-if (typeof user !== 'object')  
+if (typeof user !== 'object')  
 global.db.data.users[m.sender] = {}
 if (user) {
 if (!isNumber(user.exp))
@@ -71,8 +71,6 @@ if (!('premium' in user))
 user.premium = false
 if (!user.premium)
 user.premiumTime = 0
-if (!('registered' in user))
-user.registered = false
 if (!('genre' in user))
 user.genre = ''
 if (!('birth' in user))
@@ -87,7 +85,7 @@ if (!user.registered) {
 if (!('name' in user))
 user.name = m.name
 if (!isNumber(user.age))
-user.age = -1
+user.age = 18
 if (!isNumber(user.regTime))
 user.regTime = -1
 }
@@ -124,14 +122,13 @@ lastpago: 0,
 lastmining: 0,
 lastcodereg: 0,
 muto: false,
-registered: false,
 genre: '',
 birth: '',
 marry: '',
 description: '',
 packstickers: null,
 name: m.name,
-age: -1,
+age: 18,
 regTime: -1,
 afk: -1,
 afkReason: '',
@@ -141,7 +138,7 @@ bank: 0,
 level: 0,
 role: 'Nuv',
 premium: false,
-premiumTime: 0,                 
+premiumTime: 0,                 
 }
 let chat = global.db.data.chats[m.chat]
 if (typeof chat !== 'object')
@@ -152,7 +149,7 @@ chat.isBanned = false
 if (!('sAutoresponder' in chat))
 chat.sAutoresponder = ''
 if (!('welcome' in chat))
-chat.welcome = true
+chat.welcome = false
 if (!('autolevelup' in chat))
 chat.autolevelup = false
 if (!('autoAceptar' in chat))
@@ -170,7 +167,7 @@ chat.antiBot = false
 if (!('antiBot2' in chat))
 chat.antiBot2 = false
 if (!('modoadmin' in chat))
-chat.modoadmin = false   
+chat.modoadmin = false
 if (!('antiLink' in chat))
 chat.antiLink = true
 if (!('reaction' in chat))
@@ -181,13 +178,17 @@ if (!('antifake' in chat))
 chat.antifake = false
 if (!('delete' in chat))
 chat.delete = false
+if (!('economy' in chat))
+chat.economy = true
+if (!('gacha' in chat))
+chat.gacha = true
 if (!isNumber(chat.expired))
 chat.expired = 0
 } else
 global.db.data.chats[m.chat] = {
 isBanned: false,
 sAutoresponder: '',
-welcome: true,
+welcome: false,
 autolevelup: false,
 autoresponder: false,
 delete: false,
@@ -201,9 +202,9 @@ antiLink: true,
 antifake: false,
 reaction: false,
 nsfw: false,
+economy: true,
+gacha: true,
 expired: 0, 
-antiLag: false,
-per: [],
 }
 var settings = global.db.data.settings[this.user.jid]
 if (typeof settings !== 'object') global.db.data.settings[this.user.jid] = {}
@@ -234,9 +235,9 @@ const isMods = isROwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + detec
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + detectwhat).includes(m.sender) || _user.premium == true
 
 if (m.isBaileys) return
-if (opts['nyimak'])  return
+if (opts['nyimak'])  return
 if (!isROwner && opts['self']) return
-if (opts['swonly'] && m.chat !== 'status@broadcast')  return
+if (opts['swonly'] && m.chat !== 'status@broadcast')  return
 if (typeof m.text !== 'string')
 m.text = ''
 
@@ -371,8 +372,8 @@ return
 
 let hl = _prefix 
 let adminMode = global.db.data.chats[m.chat].modoadmin
-let mini = `${plugins.botAdmin || plugins.admin || plugins.group || plugins || noPrefix || hl ||  m.text.slice(0, 1) == hl || plugins.command}`
-if (adminMode && !isOwner && !isROwner && m.isGroup && !isAdmin && mini) return   
+let mini = `${plugins.botAdmin || plugins.admin || plugins.group || plugins || noPrefix || hl ||  m.text.slice(0, 1) == hl || plugins.command}`
+if (adminMode && !isOwner && !isROwner && m.isGroup && !isAdmin && mini) return   
 if (plugin.rowner && plugin.owner && !(isROwner || isOwner)) { 
 fail('owner', m, this)
 continue
@@ -401,10 +402,6 @@ fail('botAdmin', m, this)
 continue
 } else if (plugin.admin && !isAdmin) { 
 fail('admin', m, this)
-continue
-}
-if (plugin.private && m.isGroup) {
-fail('private', m, this)
 continue
 }
 if (plugin.register == true && _user.registered == false) { 
@@ -521,7 +518,7 @@ try {
 if (!opts['noprint']) await (await import(`./lib/print.js`)).default(m, this)
 } catch (e) { 
 console.log(m, m.quoted, e)}
-let settingsREAD = global.db.data.settings[this.user.jid] || {}  
+let settingsREAD = global.db.data.settings[this.user.jid] || {}  
 if (opts['autoread']) await this.readMessages([m.key])
 
 if (db.data.chats[m.chat].reaction && m.text.match(/(ción|dad|aje|oso|izar|mente|pero|tion|age|ous|ate|and|but|ify|ai|yuki|a|s)/gi)) {
@@ -546,7 +543,6 @@ group: `『✦』El comando *${comando}* solo puede ser usado en grupos.`,
 private: `『✦』El comando *${comando}* solo puede ser usado al chat privado del bot.`,
 admin: `『✦』El comando *${comando}* solo puede ser usado por los administradores del grupo.`, 
 botAdmin: `『✦』Para ejecutar el comando *${comando}* debo ser administrador del grupo.`,
-unreg: `『✦』El comando *${comando}* solo puede ser usado por los usuarios registrado, registrate usando:\n> » #${verifyaleatorio} ${user2}.${edadaleatoria}`,
 restrict: `『✦』Esta caracteristica está desactivada.`
 }[type];
 if (msg) return m.reply(msg).then(_ => m.react('✖️'))}
